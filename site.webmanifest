@@ -1,0 +1,21 @@
+{
+  "name": "Manifold",
+  "short_name": "Manifold",
+  "description": "Communications consulting agency in Overseas France and Occitanie.",
+  "start_url": "home.html",
+  "display": "standalone",
+  "background_color": "#121414",
+  "theme_color": "#1FCD6E",
+  "icons": [
+    {
+      "src": "assets/icons/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
