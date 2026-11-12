@@ -280,6 +280,14 @@ main > .sec:is(.papier, .ag-blanc)[data-jonction="feuille"] {
   opacity: .35;
 }
 
+@media (hover: hover) {
+  #formulaire .fm__navbtn:hover:not(:disabled) {
+    background: var(--manifold-green);
+    border-color: var(--manifold-green);
+    color: #080a09;
+  }
+}
+
 .piste__commandes svg {
   width: 18px;
   height: 18px;
