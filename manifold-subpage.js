@@ -3,6 +3,173 @@
   const nav = document.querySelector('[data-nav]');
   const faq = document.querySelector('#faq, #questions');
 
+  const initSectionJoins = () => {
+    const joins = [...document.querySelectorAll('.jonctions > .jonction')];
+    const sections = [...document.querySelectorAll('main section')]
+      .filter((section) => section.getClientRects().length);
+    const joinedSections = sections.filter((section) => section.matches('[data-jonction="feuille"]'));
+    if (!joins.length || !joinedSections.length) return;
+
+    const getTarget = (join) => {
+      const previous = join.dataset.haut && document.getElementById(join.dataset.haut);
+      if (previous) return { element: previous, edge: 'bottom' };
+
+      const isEnd = join.dataset.feuille === 'haut';
+      if (isEnd) {
+        const initialTop = Number.parseFloat(join.style.top);
+        if (Number.isFinite(initialTop)) {
+          let closest = null;
+          let closestDistance = Infinity;
+          sections.forEach((section) => {
+            const rect = section.getBoundingClientRect();
+            ['top', 'bottom'].forEach((edge) => {
+              const distance = Math.abs(rect[edge] + window.scrollY - initialTop);
+              if (distance < closestDistance) {
+                closest = { element: section, edge };
+                closestDistance = distance;
+              }
+            });
+          });
+          if (closest) return closest;
+        }
+      }
+
+      return {
+        element: isEnd ? sections[sections.length - 1] : joinedSections[0],
+        edge: isEnd ? 'bottom' : 'top'
+      };
+    };
+    const targets = joins.map((join) => getTarget(join));
+    const update = () => {
+      const positions = joins.map((join, index) => {
+        const target = targets[index];
+        if (!target.element) return null;
+        const rect = target.element.getBoundingClientRect();
+        return [join, `${Math.round((rect[target.edge] + window.scrollY) * 100) / 100}px`];
+      });
+      positions.forEach((position) => {
+        if (position && position[0].style.top !== position[1]) {
+          position[0].style.top = position[1];
+        }
+      });
+    };
+    let frame = 0;
+    const schedule = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        update();
+      });
+    };
+
+    update();
+    window.addEventListener('resize', schedule);
+    window.addEventListener('load', schedule, { once: true });
+    if (document.fonts) document.fonts.ready.then(schedule);
+    if ('ResizeObserver' in window) {
+      const observer = new ResizeObserver(schedule);
+      const main = document.querySelector('main');
+      if (main) observer.observe(main);
+      new Set(targets.map((target) => target.element).filter(Boolean)).forEach((target) => {
+        observer.observe(target);
+      });
+    }
+  };
+
+  initSectionJoins();
+
+  const initAboutTimeline = () => {
+    const list = document.querySelector('#tlList');
+    const bigYear = document.querySelector('#bigYear');
+    if (!list || !bigYear) return;
+
+    const items = [...list.querySelectorAll('.tl-item')];
+    if (!items.length) return;
+
+    const years = items.map((item) => item.querySelector('.tl-year').textContent.trim());
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let activeIndex = -2;
+    let displayedYear = bigYear.textContent.trim();
+    let yearAnimation = null;
+    let yearRevision = 0;
+    let frame = 0;
+
+    const setYear = (year) => {
+      if (year === displayedYear) return;
+      displayedYear = year;
+      yearRevision += 1;
+      const revision = yearRevision;
+      yearAnimation?.cancel();
+      yearAnimation = null;
+
+      if (motionPreference.matches) {
+        bigYear.textContent = year;
+        return;
+      }
+
+      if (bigYear.textContent.trim() === year) return;
+      yearAnimation = bigYear.animate(
+        [{ transform: 'translateY(0)', opacity: 1 }, { transform: 'translateY(-40%)', opacity: 0 }],
+        { duration: 150, easing: 'ease-out', fill: 'forwards' }
+      );
+      yearAnimation.onfinish = () => {
+        if (revision !== yearRevision) return;
+        bigYear.textContent = year;
+        yearAnimation = bigYear.animate(
+          [{ transform: 'translateY(40%)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }],
+          { duration: 150, easing: 'ease-out', fill: 'forwards' }
+        );
+        yearAnimation.onfinish = () => {
+          if (revision === yearRevision) yearAnimation = null;
+        };
+      };
+    };
+
+    const update = () => {
+      frame = 0;
+      const readingLine = window.innerHeight * 0.5;
+      const listRect = list.getBoundingClientRect();
+      const itemTops = items.map((item) => item.getBoundingClientRect().top);
+      const progress = Math.min(Math.max(readingLine - listRect.top, 0), listRect.height);
+      let nextIndex = -1;
+      itemTops.forEach((top, index) => {
+        if (top <= readingLine) nextIndex = index;
+      });
+
+      list.style.setProperty('--progress', `${progress}px`);
+      list.classList.toggle('is-progressing', progress > 0);
+      if (nextIndex !== activeIndex) {
+        items.forEach((item, index) => {
+          item.classList.toggle('is-active', index === nextIndex);
+          item.classList.toggle('is-passed', index < nextIndex);
+        });
+        setYear(years[Math.max(nextIndex, 0)]);
+        activeIndex = nextIndex;
+      }
+    };
+
+    const scheduleUpdate = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+
+    motionPreference.addEventListener('change', (event) => {
+      if (!event.matches || !yearAnimation) return;
+      yearRevision += 1;
+      yearAnimation.cancel();
+      yearAnimation = null;
+      bigYear.textContent = displayedYear;
+    });
+
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate, { passive: true });
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(scheduleUpdate).observe(list);
+    }
+    scheduleUpdate();
+  };
+
+  initAboutTimeline();
+
   const initClocks = () => {
     const clocks = [...document.querySelectorAll('[data-tz]')];
     if (!clocks.length) return;
@@ -427,4 +594,251 @@
   };
 
   initContactForm();
+})();
+
+// Infinite auto-scroll for .ag-vie.is-auto strips (clears inline transforms)
+(() => {
+  const init = () => {
+    document.querySelectorAll('.ag-vie.is-auto .ag-vie__piste').forEach((piste) => {
+      piste.style.transform = '';
+      const distance = (piste.scrollWidth / 2) || piste.scrollWidth || 1;
+      const duration = Math.max(20, Math.min(80, distance / 60));
+      piste.style.setProperty('--ag-vie-duration', duration + 's');
+    });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+  window.addEventListener('load', init, { once: true });
+})();
+
+// Scroll-tied text fill for .ecriture__fantome (progresses with scroll)
+(() => {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const getItems = () => Array.from(document.querySelectorAll('.ecriture__mot')).filter(m => m.querySelector('.ecriture__fantome'));
+  let items = getItems();
+  if (!items.length) return;
+
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  const update = () => {
+    if (!items.length) items = getItems();
+    const vh = window.innerHeight || document.documentElement.clientHeight || 800;
+    const start = vh * 0.85;
+    const end = vh * 0.35;
+    items.forEach((mot) => {
+      const fantome = mot.querySelector('.ecriture__fantome');
+      if (!fantome) return;
+      if (reduceMotion) {
+        fantome.style.setProperty('--ecriture-fill', '100%');
+        return;
+      }
+      const rect = mot.getBoundingClientRect();
+      const p = clamp01((start - rect.top) / Math.max(1, start - end));
+      fantome.style.setProperty('--ecriture-fill', (p * 100).toFixed(2) + '%');
+    });
+  };
+
+  let ticking = false;
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      update();
+      ticking = false;
+    });
+  };
+
+  const init = () => { items = getItems(); update(); };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+  window.addEventListener('load', init, { once: true });
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+})();
+
+// Contact form wizard: one question at a time with pill inputs/options
+(() => {
+  const form = document.querySelector('form.fm--wizard');
+  if (!form) return;
+
+  const steps = Array.from(form.querySelectorAll('.fm__step'));
+  const prevBtn = form.querySelector('[data-fm-prev]');
+  const nextBtn = form.querySelector('[data-fm-next]');
+  const currentEl = form.querySelector('[data-fm-current]');
+  const totalEl = form.querySelector('[data-fm-total]');
+  const bar = form.querySelector('[data-fm-bar]');
+  const messagesTpl = form.querySelector('#fm-messages');
+  const failBox = form.querySelector('.fm__echec');
+  const successBox = form.querySelector('.fm__success');
+
+  let index = 0;
+  if (totalEl) totalEl.textContent = String(steps.length);
+
+  const getMsg = (key, fallback) => {
+    if (!messagesTpl) return fallback;
+    const root = messagesTpl.content || messagesTpl;
+    const p = root.querySelector ? root.querySelector('[data-m="' + key + '"]') : null;
+    return p ? p.textContent.trim() : fallback;
+  };
+
+  const setError = (step, message) => {
+    const err = step.querySelector('.fm__err');
+    if (!err) return;
+    if (message) {
+      err.textContent = message;
+      err.classList.add('is-show');
+    } else {
+      err.textContent = '';
+      err.classList.remove('is-show');
+    }
+  };
+
+  const clearStepErrors = (step) => {
+    setError(step, '');
+    step.querySelectorAll('[aria-invalid="true"]').forEach((el) => el.removeAttribute('aria-invalid'));
+  };
+
+  const validateStep = (step) => {
+    clearStepErrors(step);
+    const req = step.dataset.required;
+    if (!req) return true;
+
+    if (req.indexOf(':checked') !== -1) {
+      const ok = !!step.querySelector(req);
+      if (!ok) {
+        const nameEl = step.querySelector('input[type="radio"], input[type="checkbox"]');
+        const name = nameEl ? nameEl.name : '';
+        const key = name === 'budget' ? 'budget' : name;
+        setError(step, getMsg(key, 'Please choose an option.'));
+      }
+      return ok;
+    }
+
+    const field = step.querySelector(req) || step.querySelector('input, textarea, select');
+    if (!field) return true;
+    const val = (field.value || '').trim();
+    if (!val) {
+      field.setAttribute('aria-invalid', 'true');
+      const name = field.name || field.id || '';
+      let key = 'required';
+      if (name === 'prenom') key = 'prenom';
+      else if (name === 'nom') key = 'nom';
+      else if (name === 'email') key = 'email';
+      else if (name === 'telephone') key = 'tel-vide';
+      else if (name === 'structure') key = 'structure';
+      else if (name === 'message') key = 'message';
+      setError(step, getMsg(key, 'This field is required.'));
+      try { field.focus({ preventScroll: true }); } catch (_) {}
+      return false;
+    }
+    if (step.dataset.type === 'email' || field.type === 'email') {
+      const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+      if (!ok) {
+        field.setAttribute('aria-invalid', 'true');
+        setError(step, getMsg('email', 'Please enter a valid email address.'));
+        try { field.focus({ preventScroll: true }); } catch (_) {}
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const showStep = (i, focus) => {
+    if (focus === undefined) focus = true;
+    index = Math.max(0, Math.min(steps.length - 1, i));
+    steps.forEach((s, idx) => {
+      const active = idx === index;
+      s.classList.toggle('is-active', active);
+      s.hidden = !active;
+      s.setAttribute('aria-hidden', active ? 'false' : 'true');
+    });
+    if (currentEl) currentEl.textContent = String(index + 1);
+    if (bar) bar.style.width = ((index + 1) / steps.length) * 100 + '%';
+    if (prevBtn) prevBtn.disabled = index === 0;
+    const isSubmitStep = !!steps[index].dataset.submit;
+    if (nextBtn) nextBtn.style.display = isSubmitStep ? 'none' : '';
+    if (focus) {
+      const focusable = steps[index].querySelector('input:not([type="hidden"]):not([tabindex="-1"]), textarea, select, button.fm__submit');
+      if (focusable) {
+        try { focusable.focus({ preventScroll: true }); } catch (_) {}
+      }
+    }
+  };
+
+  if (prevBtn) prevBtn.addEventListener('click', () => showStep(index - 1));
+  if (nextBtn) nextBtn.addEventListener('click', () => {
+    if (!validateStep(steps[index])) return;
+    showStep(index + 1);
+  });
+
+  form.addEventListener('change', (e) => {
+    const target = e.target;
+    if (!target || target.tagName !== 'INPUT') return;
+    if (target.name === 'actualites_choice') {
+      const hidden = form.querySelector('#fm-actualites');
+      if (hidden) hidden.value = target.value === 'yes' ? '1' : '';
+    }
+    const step = target.closest('.fm__step');
+    if (!step || step !== steps[index]) return;
+    if (target.type === 'radio' && !step.dataset.submit) {
+      clearStepErrors(step);
+      setTimeout(() => { if (steps[index] === step) showStep(index + 1, false); }, 180);
+    }
+  });
+
+  form.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const target = e.target;
+    if (target && target.tagName === 'TEXTAREA') return;
+    if (steps[index] && steps[index].dataset.submit) return;
+    e.preventDefault();
+    if (!validateStep(steps[index])) return;
+    showStep(index + 1);
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    for (let i = 0; i < steps.length; i++) {
+      if (!validateStep(steps[i])) { showStep(i); return; }
+    }
+    const honeypot = form.querySelector('input[name="piege"]');
+    if (honeypot && honeypot.value) return;
+
+    const data = new FormData(form);
+    const besoins = data.getAll('besoins').join(', ') || '—';
+    const budgetMap = {
+      'moins-5k': '< €5,000',
+      '5k-15k': '€5,000–€15,000',
+      '15k-50k': '€15,000–€50,000',
+      'plus-50k': '> €50,000',
+      'a-definir': 'Not sure yet'
+    };
+    const budget = budgetMap[data.get('budget')] || data.get('budget') || '—';
+    const news = data.get('actualites') ? 'Yes' : (data.get('actualites_choice') === 'no' ? 'No' : '—');
+    const body = [
+      'First name: ' + (data.get('prenom') || ''),
+      'Last name: ' + (data.get('nom') || ''),
+      'Email: ' + (data.get('email') || ''),
+      'Phone: ' + ((data.get('indicatif') || '') + ' ' + (data.get('telephone') || '')).trim(),
+      'Organization: ' + (data.get('structure') || ''),
+      'Needs: ' + besoins,
+      'Budget: ' + budget,
+      'Message: ' + (data.get('message') || ''),
+      'News opt-in: ' + news
+    ].join('\n');
+    const subject = ('New project inquiry — ' + (data.get('prenom') || '') + ' ' + (data.get('nom') || '')).trim();
+    const mailto = 'mailto:contact@manifold.marketing?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+
+    if (failBox) failBox.innerHTML = '';
+    if (successBox) successBox.classList.add('is-show');
+    try { window.location.href = mailto; } catch (_) {}
+  });
+
+  steps.forEach((s, i) => { if (i !== 0) { s.hidden = true; s.setAttribute('aria-hidden', 'true'); } });
+  showStep(0, false);
 })();

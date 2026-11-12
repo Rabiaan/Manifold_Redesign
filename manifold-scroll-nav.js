@@ -7,6 +7,81 @@
   const newsTrack = document.querySelector('[data-news-track]');
   const newsControls = document.querySelector('.manifold-journal-controls');
 
+  const initSectionJoins = () => {
+    const joins = [...document.querySelectorAll('.jonctions > .jonction')];
+    const sections = [...document.querySelectorAll('main section')]
+      .filter((section) => section.getClientRects().length);
+    const joinedSections = sections.filter((section) => section.matches('[data-jonction="feuille"]'));
+    if (!joins.length || !joinedSections.length) return;
+
+    const getTarget = (join) => {
+      const previous = join.dataset.haut && document.getElementById(join.dataset.haut);
+      if (previous) return { element: previous, edge: 'bottom' };
+
+      const isEnd = join.dataset.feuille === 'haut';
+      if (isEnd) {
+        const initialTop = Number.parseFloat(join.style.top);
+        if (Number.isFinite(initialTop)) {
+          let closest = null;
+          let closestDistance = Infinity;
+          sections.forEach((section) => {
+            const rect = section.getBoundingClientRect();
+            ['top', 'bottom'].forEach((edge) => {
+              const distance = Math.abs(rect[edge] + window.scrollY - initialTop);
+              if (distance < closestDistance) {
+                closest = { element: section, edge };
+                closestDistance = distance;
+              }
+            });
+          });
+          if (closest) return closest;
+        }
+      }
+
+      return {
+        element: isEnd ? sections[sections.length - 1] : joinedSections[0],
+        edge: isEnd ? 'bottom' : 'top'
+      };
+    };
+    const targets = joins.map((join) => getTarget(join));
+    const update = () => {
+      const positions = joins.map((join, index) => {
+        const target = targets[index];
+        if (!target.element) return null;
+        const rect = target.element.getBoundingClientRect();
+        return [join, `${Math.round((rect[target.edge] + window.scrollY) * 100) / 100}px`];
+      });
+      positions.forEach((position) => {
+        if (position && position[0].style.top !== position[1]) {
+          position[0].style.top = position[1];
+        }
+      });
+    };
+    let frame = 0;
+    const schedule = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        update();
+      });
+    };
+
+    update();
+    window.addEventListener('resize', schedule);
+    window.addEventListener('load', schedule, { once: true });
+    if (document.fonts) document.fonts.ready.then(schedule);
+    if ('ResizeObserver' in window) {
+      const observer = new ResizeObserver(schedule);
+      const main = document.querySelector('main');
+      if (main) observer.observe(main);
+      new Set(targets.map((target) => target.element).filter(Boolean)).forEach((target) => {
+        observer.observe(target);
+      });
+    }
+  };
+
+  initSectionJoins();
+
   const initClocks = () => {
     const clocks = [...document.querySelectorAll('[data-tz]')];
     if (!clocks.length) return;
@@ -549,19 +624,8 @@
     document.body.append(heroFilm);
     heroFilmSource.classList.add('manifold-hero-source');
 
-    const heroLabel = hero.querySelector('#hh-t .sr-only');
-    if (heroLabel) {
-      heroLabel.textContent = heroLabel.textContent.replace(/Bitwip/gi, 'Manifold');
-    }
-
     const originalHeroCopy = hero.querySelector('.hh__manif');
     if (originalHeroCopy) originalHeroCopy.remove();
-  }
-
-  document.title = document.title.replace(/Bitwip/gi, 'Manifold');
-  const socialTitle = document.querySelector('meta[property="og:title"]');
-  if (socialTitle) {
-    socialTitle.content = socialTitle.content.replace(/Bitwip/gi, 'Manifold');
   }
 
   if (!hero) return;
@@ -733,4 +797,69 @@
   window.addEventListener('scroll', updateScrollEffects, { passive: true });
   window.addEventListener('resize', handleResize, { passive: true });
   updateScrollEffects();
+})();
+
+// Infinite auto-scroll for .ag-vie.is-auto strips (clears inline transforms)
+(() => {
+  const init = () => {
+    document.querySelectorAll('.ag-vie.is-auto .ag-vie__piste').forEach((piste) => {
+      piste.style.transform = '';
+      const distance = (piste.scrollWidth / 2) || piste.scrollWidth || 1;
+      const duration = Math.max(20, Math.min(80, distance / 60));
+      piste.style.setProperty('--ag-vie-duration', duration + 's');
+    });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+  window.addEventListener('load', init, { once: true });
+})();
+
+// Scroll-tied text fill for .ecriture__fantome (progresses with scroll)
+(() => {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const getItems = () => Array.from(document.querySelectorAll('.ecriture__mot')).filter(m => m.querySelector('.ecriture__fantome'));
+  let items = getItems();
+  if (!items.length) return;
+
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  const update = () => {
+    if (!items.length) items = getItems();
+    const vh = window.innerHeight || document.documentElement.clientHeight || 800;
+    const start = vh * 0.85;
+    const end = vh * 0.35;
+    items.forEach((mot) => {
+      const fantome = mot.querySelector('.ecriture__fantome');
+      if (!fantome) return;
+      if (reduceMotion) {
+        fantome.style.setProperty('--ecriture-fill', '100%');
+        return;
+      }
+      const rect = mot.getBoundingClientRect();
+      const p = clamp01((start - rect.top) / Math.max(1, start - end));
+      fantome.style.setProperty('--ecriture-fill', (p * 100).toFixed(2) + '%');
+    });
+  };
+
+  let ticking = false;
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      update();
+      ticking = false;
+    });
+  };
+
+  const init = () => { items = getItems(); update(); };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+  window.addEventListener('load', init, { once: true });
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
 })();
