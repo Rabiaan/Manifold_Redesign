@@ -1,13 +1,10 @@
 {
-  "name": "web-design",
+  "name": "manifold-redesign",
   "version": "1.0.0",
-  "description": "",
-  "main": "manifold-scroll-nav.js",
+  "private": true,
+  "description": "Manifold communications agency redesign",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+    "dev": "npx --yes serve .",
+    "check": "node --check manifold-scroll-nav.js && node --check manifold-subpage.js"
+  }
 }

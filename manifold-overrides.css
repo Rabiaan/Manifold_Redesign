@@ -532,20 +532,67 @@
   .char-reveal { opacity: 1; transform: none; transition: none; }
 }
 
-#hh-t .mj__m {
-  perspective: 800px;
+#hh-t {
+  overflow: visible;
 }
 
-#hh-t .hero-interactive-letter {
-  rotate: y var(--hero-letter-tilt, 0deg);
-  scale: var(--hero-letter-scale, 1);
+#hh-t .mj__l2 {
+  line-height: 1.05;
+  overflow: visible;
+}
+
+#hh-t .mj__l2 .mj__c {
+  margin-inline-end: .04em;
+}
+
+#hh-t .mj__l2 .mj__c:last-child {
+  margin-inline-end: 0;
+}
+
+#hh-t .mj__m,
+.mj__cadre--titre {
+  perspective: none;
+}
+
+.hh__couche {
+  z-index: 2;
+}
+
+.hh__carte {
+  z-index: 0;
+}
+
+#hh-t .mj__mots {
+  display: block;
+  align-self: stretch;
+  position: relative;
+  text-align: center;
+  transform-origin: 50% 50%;
+  transform:
+    perspective(1200px)
+    rotateY(var(--hero-word-tilt, 0deg))
+    translateZ(var(--hero-word-z, 0px));
+  filter: brightness(var(--hero-word-brightness, 1));
+  backface-visibility: visible;
+  will-change: transform, filter;
+}
+
+#hh-t .hero-interactive-letter--scale {
+  position: relative;
+  transform-origin: 50% 92%;
+  transform: scale(var(--hero-letter-scale, 1));
   will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #hh-t .hero-interactive-letter {
-    rotate: none;
-    scale: none;
+  #hh-t .mj__mots {
+    transform: none;
+    filter: none;
+    will-change: auto;
+  }
+
+  #hh-t .hero-interactive-letter--scale {
+    transform: none;
     will-change: auto;
   }
 }

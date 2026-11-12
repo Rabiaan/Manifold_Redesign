@@ -2,7 +2,7 @@
   "name": "Manifold",
   "short_name": "Manifold",
   "description": "Communications consulting agency in Overseas France and Occitanie.",
-  "start_url": "home.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#121414",
   "theme_color": "#1FCD6E",

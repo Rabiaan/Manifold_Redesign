@@ -37,21 +37,11 @@
     const title = document.querySelector('#hh-t');
     if (!title) return;
 
-    const firstLineWords = title.querySelectorAll('.mj__l1 > .mj__m');
-    const meetsWord = firstLineWords[1];
-    if (meetsWord && !meetsWord.children.length) {
-      const letters = Array.from(meetsWord.textContent.trim(), (character) => {
-        const letter = document.createElement('span');
-        letter.className = 'mj__g hero-interactive-letter';
-        letter.textContent = character;
-        return letter;
-      });
-      meetsWord.replaceChildren(...letters);
-    }
+    const word = title.querySelector('.mj__mots');
+    if (!word) return;
 
-    title.querySelectorAll('.mj__l1 .mj__g, .mj__l2 .mj__c').forEach((letter) => {
-      letter.classList.add('hero-interactive-letter');
-      if (letter.matches('.mj__c')) letter.classList.add('hero-interactive-letter--scale');
+    title.querySelectorAll('.mj__l2 .mj__c').forEach((letter) => {
+      letter.classList.add('hero-interactive-letter--scale');
     });
 
     const canAnimate = window.matchMedia('(hover: hover) and (pointer: fine)').matches
@@ -59,19 +49,50 @@
       && (navigator.maxTouchPoints || 0) === 0;
     if (!canAnimate) return;
 
-    const letters = [...title.querySelectorAll('.hero-interactive-letter')].map((element) => ({
+    const letters = [...title.querySelectorAll('.hero-interactive-letter--scale')].map((element) => ({
       element,
-      tilt: 0,
       scale: 1,
-      scales: element.classList.contains('hero-interactive-letter--scale'),
     }));
-    const radius = 180;
-    const maxTilt = 16;
+    const radius = 170;
+    const maxTilt = 6;
+    const maxLift = 6;
     let pointer = null;
+    let wordTilt = 0;
+    let wordLift = 0;
     let frame = 0;
 
     const animate = () => {
       frame = 0;
+      const wordRect = title.getBoundingClientRect();
+      const wordCenterX = wordRect.left + wordRect.width / 2;
+      const wordCenterY = wordRect.top + wordRect.height / 2;
+      const wordDx = pointer ? pointer.x - wordCenterX : 0;
+      const wordDy = pointer ? pointer.y - wordCenterY : 0;
+      const horizontalInfluence = pointer
+        ? Math.max(0, 1 - Math.max(0, Math.abs(wordDx) - wordRect.width / 2) / 260)
+        : 0;
+      const verticalInfluence = pointer
+        ? Math.max(0, 1 - Math.max(0, Math.abs(wordDy) - wordRect.height / 2) / 260)
+        : 0;
+      const wordInfluence = horizontalInfluence * verticalInfluence;
+      const wordDirection = Math.max(-1, Math.min(1, wordDx / (wordRect.width / 2 + 40)));
+      const targetTilt = maxTilt * wordInfluence * wordDirection;
+      const targetLift = maxLift * wordInfluence * Math.abs(wordDirection);
+
+      wordTilt += (targetTilt - wordTilt) * 0.16;
+      wordLift += (targetLift - wordLift) * 0.16;
+      let unsettled = Math.abs(targetTilt - wordTilt) > 0.02
+        || Math.abs(targetLift - wordLift) > 0.05;
+      if (!unsettled) {
+        wordTilt = targetTilt;
+        wordLift = targetLift;
+      }
+
+      const brightness = 1 - 0.04 * Math.min(1, Math.abs(wordTilt) / maxTilt);
+      word.style.setProperty('--hero-word-tilt', `${wordTilt.toFixed(2)}deg`);
+      word.style.setProperty('--hero-word-z', `${wordLift.toFixed(2)}px`);
+      word.style.setProperty('--hero-word-brightness', brightness.toFixed(3));
+
       const updates = letters.map((letter) => {
         const rect = letter.element.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
@@ -79,28 +100,21 @@
         const dx = pointer ? pointer.x - centerX : 0;
         const dy = pointer ? pointer.y - centerY : 0;
         const distance = Math.hypot(dx, dy);
-        const proximity = Math.max(0, 1 - distance / radius);
+        const proximity = pointer ? Math.max(0, 1 - distance / radius) : 0;
         const easedProximity = proximity * proximity * (3 - 2 * proximity);
-        const tilt = pointer
-          ? maxTilt * easedProximity * Math.max(-1, Math.min(1, dx / (radius * 0.55)))
-          : 0;
-        const scale = letter.scales ? 1 + 0.35 * easedProximity : 1;
-        return { letter, tilt, scale };
+        const scale = 1 + 0.15 * easedProximity;
+        return { letter, scale, easedProximity };
       });
 
-      let unsettled = false;
-      updates.forEach(({ letter, tilt, scale }) => {
-        letter.tilt += (tilt - letter.tilt) * 0.22;
+      updates.forEach(({ letter, scale, easedProximity }) => {
         letter.scale += (scale - letter.scale) * 0.22;
-        if (Math.abs(tilt - letter.tilt) > 0.05 || Math.abs(scale - letter.scale) > 0.002) {
+        if (Math.abs(scale - letter.scale) > 0.001) {
           unsettled = true;
         } else {
-          letter.tilt = tilt;
           letter.scale = scale;
         }
-
-        letter.element.style.setProperty('--hero-letter-tilt', `${letter.tilt.toFixed(2)}deg`);
         letter.element.style.setProperty('--hero-letter-scale', letter.scale.toFixed(3));
+        letter.element.style.zIndex = String(Math.round(easedProximity * 100));
       });
 
       if (unsettled) frame = window.requestAnimationFrame(animate);
@@ -123,6 +137,13 @@
     };
 
     document.addEventListener('mouseleave', clearPointer);
+    document.documentElement.addEventListener('pointerleave', clearPointer);
+    document.addEventListener('pointerout', (event) => {
+      if (!event.relatedTarget) clearPointer();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) clearPointer();
+    });
     window.addEventListener('blur', clearPointer);
     window.addEventListener('scroll', scheduleAnimation, { passive: true });
   };
@@ -197,6 +218,50 @@
   document.addEventListener('pointerdown', (event) => {
     if (event.target.closest?.('.nav__item[data-sub]')) return;
     navItems.forEach((item) => setNavItemOpen(item, false));
+  });
+
+  const menu = document.querySelector('#menu');
+  const burger = document.querySelector('[data-burger]');
+  const setMenuOpen = (open) => {
+    burger?.setAttribute('aria-expanded', String(open));
+    document.documentElement.classList.toggle('is-menu', open);
+    menu?.classList.toggle('is-open', open);
+  };
+  burger?.addEventListener('click', () => {
+    const open = burger.getAttribute('aria-expanded') !== 'true';
+    setMenuOpen(open);
+    if (open) menu?.querySelector('a, button')?.focus();
+  });
+
+  menu?.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => setMenuOpen(false));
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && burger?.getAttribute('aria-expanded') === 'true') {
+      setMenuOpen(false);
+      burger.focus();
+      return;
+    }
+    if (event.key !== 'Tab' || !document.documentElement.classList.contains('is-menu')) return;
+    const focusables = [...(menu?.querySelectorAll('a[href], button:not([disabled])') || [])]
+      .filter((element) => element.getClientRects().length);
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
+  document.addEventListener('pointerdown', (event) => {
+    if (burger?.getAttribute('aria-expanded') !== 'true') return;
+    if (menu?.contains(event.target) || burger?.contains(event.target)) return;
+    setMenuOpen(false);
   });
 
   const footerContactButton = document.querySelector('.pied-revele .cta__side .btn');
@@ -435,7 +500,7 @@
   const playHeroVideo = () => {
     if (!heroVideo) return;
     if (heroVideo.dataset.manifoldSourceLoaded !== 'true') {
-      heroVideo.src = 'assets/img/manifold%20main.mp4';
+      heroVideo.src = 'assets/img/manifold-main.mp4';
       heroVideo.dataset.manifoldSourceLoaded = 'true';
       heroVideo.load();
     }

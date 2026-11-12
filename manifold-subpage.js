@@ -45,18 +45,46 @@
 
   const menu = document.querySelector('#menu');
   const burger = document.querySelector('[data-burger]');
-  burger?.addEventListener('click', () => {
-    const open = burger.getAttribute('aria-expanded') !== 'true';
-    burger.setAttribute('aria-expanded', String(open));
+  const setMenuOpen = (open) => {
+    burger?.setAttribute('aria-expanded', String(open));
     document.documentElement.classList.toggle('is-menu', open);
     menu?.classList.toggle('is-open', open);
+  };
+  burger?.addEventListener('click', () => {
+    const open = burger.getAttribute('aria-expanded') !== 'true';
+    setMenuOpen(open);
+    if (open) menu?.querySelector('a, button')?.focus();
   });
 
   menu?.querySelectorAll('a').forEach((link) => {
-    link.addEventListener('click', () => {
-      document.documentElement.classList.remove('is-menu');
-      burger?.setAttribute('aria-expanded', 'false');
-    });
+    link.addEventListener('click', () => setMenuOpen(false));
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && burger?.getAttribute('aria-expanded') === 'true') {
+      setMenuOpen(false);
+      burger.focus();
+      return;
+    }
+    if (event.key !== 'Tab' || !document.documentElement.classList.contains('is-menu')) return;
+    const focusables = [...(menu?.querySelectorAll('a[href], button:not([disabled])') || [])]
+      .filter((element) => element.getClientRects().length);
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
+  document.addEventListener('pointerdown', (event) => {
+    if (burger?.getAttribute('aria-expanded') !== 'true') return;
+    if (menu?.contains(event.target) || burger?.contains(event.target)) return;
+    setMenuOpen(false);
   });
 
   const navItems = [...document.querySelectorAll('.nav__item[data-sub]')];
