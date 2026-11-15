@@ -570,7 +570,11 @@
 
   let heroFilm;
   let heroCopy;
+  let heroCopySetupDone = false;
   let heroFilmStart;
+  let heroFilmReady = false;
+  let heroFilmBuildPending = false;
+  let heroFilmBuildTimer = 0;
 
   const playHeroVideo = () => {
     if (!heroVideo) return;
@@ -604,7 +608,7 @@
     heroVideo.setAttribute('aria-label', 'Manifold hero showreel');
   }
 
-  if (!reduceMotion && heroFilmSource && heroVideo && heroVeil) {
+  if (heroFilmSource && heroVideo && heroVeil) {
     heroFilm = document.createElement('div');
     heroFilm.className = 'manifold-hero-film';
 
@@ -619,9 +623,14 @@
     ].join('');
     heroCopy.setAttribute('aria-hidden', 'true');
     prepareCharacterReveal(heroCopy, true);
+    heroCopySetupDone = true;
 
-    heroFilm.append(heroVideo, heroVeil, heroCopy);
-    document.body.append(heroFilm);
+    const heroStage = hero.querySelector('.hh__scene');
+    if (heroStage) {
+      heroStage.append(heroFilm, heroCopy);
+    } else {
+      document.body.append(heroFilm, heroCopy);
+    }
     heroFilmSource.classList.add('manifold-hero-source');
 
     const originalHeroCopy = hero.querySelector('.hh__manif');
@@ -632,8 +641,28 @@
 
   let frame = 0;
   let heroTimeline = null;
+  let pageReady = document.documentElement.classList.contains('is-ready');
+  let readyFallback = 0;
   const HERO_FULL_AT = 0.85;
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+  const markPageReady = () => {
+    if (pageReady) return;
+    pageReady = true;
+    window.clearTimeout(readyFallback);
+    document.documentElement.classList.add('is-ready');
+    if (heroFilm && heroFilmSource) {
+      scheduleHeroFilmBuild();
+    }
+    updateScrollEffects();
+  };
+
+  const loadPromise = document.readyState === 'complete'
+    ? Promise.resolve()
+    : new Promise((resolve) => window.addEventListener('load', resolve, { once: true }));
+  const fontsPromise = document.fonts ? document.fonts.ready : Promise.resolve();
+  Promise.all([loadPromise, fontsPromise]).then(markPageReady);
+  readyFallback = window.setTimeout(markPageReady, 8000);
 
   const measureHeroFilm = () => {
     if (!heroFilmSource) return;
@@ -647,7 +676,7 @@
   };
 
   const buildHeroTimeline = () => {
-    if (typeof gsap === 'undefined' || reduceMotion || !heroFilm || !heroCopy) return;
+    if (typeof gsap === 'undefined' || reduceMotion || !heroFilm || !heroCopy || !pageReady || !heroFilmReady) return;
 
     if (heroTimeline) {
       heroTimeline.kill();
@@ -666,9 +695,8 @@
       width: heroFilmStart.width,
       height: heroFilmStart.height,
       borderRadius: 24,
-      visibility: 'visible',
+      visibility: pageReady ? 'visible' : 'hidden',
     });
-    gsap.set(heroCopy, { opacity: 0 });
 
     const state = { progress: 0 };
 
@@ -690,9 +718,40 @@
         heroFilm.style.setProperty('--manifold-hero-progress', value);
       },
     }, 0);
-    heroTimeline.to(heroCopy, { opacity: 1, duration: 0.15 }, 0.7);
 
     heroTimeline.progress(0);
+  };
+
+  const finishHeroFilmBuild = () => {
+    if (heroFilmReady || !heroFilm || !heroFilmSource) return;
+    if (!pageReady) {
+      heroFilmBuildPending = false;
+      return;
+    }
+
+    heroFilmReady = true;
+    heroFilmBuildPending = false;
+    window.clearTimeout(heroFilmBuildTimer);
+    heroFilm.append(heroVideo, heroVeil);
+    measureHeroFilm();
+    buildHeroTimeline();
+    updateScrollEffects();
+  };
+
+  const scheduleHeroFilmBuild = () => {
+    if (heroFilmReady || heroFilmBuildPending || !heroFilm || !heroFilmSource) return;
+    heroFilmBuildPending = true;
+
+    const tile = heroFilmSource.parentElement;
+    const animation = tile?.getAnimations?.().find((item) => item.animationName === 'mj-chute');
+
+    if (reduceMotion || !animation || animation.playState === 'finished') {
+      finishHeroFilmBuild();
+      return;
+    }
+
+    animation.finished.then(finishHeroFilmBuild, finishHeroFilmBuild);
+    heroFilmBuildTimer = window.setTimeout(finishHeroFilmBuild, 6000);
   };
 
   const updateScrollEffects = () => {
@@ -730,16 +789,27 @@
           heroFilm.style.height = `${height}px`;
           heroFilm.style.borderRadius = `${24 * (1 - heroProgress)}px`;
           heroFilm.style.setProperty('--manifold-hero-progress', heroProgress.toFixed(4));
-          if (heroCopy) {
-            const copyProgress = clamp((heroProgress - 0.72) / 0.2, 0, 1);
-            heroCopy.style.opacity = copyProgress.toFixed(3);
-          }
         }
       }
 
-      if (heroFilm) heroFilm.style.visibility = heroVisible ? 'visible' : 'hidden';
-      if (heroCopy) heroCopy.setAttribute('aria-hidden', String(heroProgress < 0.7));
-      if (heroCopy && heroProgress >= 0.7) heroCopy.classList.add('is-char-revealed');
+      if (heroFilm) heroFilm.style.visibility = pageReady && heroFilmReady && heroVisible ? 'visible' : 'hidden';
+      if (heroCopy) {
+        const copyFadeIn = clamp((heroProgress - 0.10) / 0.15, 0, 1);
+        const copyFadeOut = clamp((0.95 - heroProgress) / 0.15, 0, 1);
+        const copyOpacity = pageReady && heroFilmReady && heroCopySetupDone
+          ? (reduceMotion
+              ? (heroProgress >= 0.10 && heroProgress < 0.95 ? 1 : 0)
+              : Math.min(copyFadeIn, copyFadeOut))
+          : 0;
+        heroCopy.style.opacity = copyOpacity.toFixed(3);
+        const copyVisible = copyOpacity > 0;
+        heroCopy.setAttribute('aria-hidden', String(!copyVisible));
+        if (copyVisible) {
+          heroCopy.classList.add('is-char-revealed');
+        } else if (!pageReady || !heroCopySetupDone) {
+          heroCopy.classList.remove('is-char-revealed');
+        }
+      }
 
       if (footerBrand && footerHalves.length) {
         const brandRect = footerBrand.getBoundingClientRect();
@@ -780,16 +850,19 @@
     });
   };
 
-  if (heroFilm && heroFilmSource) {
-    measureHeroFilm();
-    buildHeroTimeline();
-  }
+  const heroObserver = 'IntersectionObserver' in window
+    ? new IntersectionObserver(() => {
+        updateScrollEffects();
+      }, { threshold: 0.3 })
+    : null;
+  if (heroObserver) heroObserver.observe(hero);
 
   let resizeTimer = 0;
   const handleResize = () => {
     window.clearTimeout(resizeTimer);
     resizeTimer = window.setTimeout(() => {
-      if (heroFilm && heroFilmSource) buildHeroTimeline();
+      if (heroFilmReady && heroFilm && heroFilmSource) buildHeroTimeline();
+      else scheduleHeroFilmBuild();
       updateScrollEffects();
     }, 150);
   };

@@ -92,7 +92,13 @@ main > .sec:is(.papier, .ag-blanc)[data-jonction="feuille"] {
 }
 
 .hh {
+  position: relative;
+  overflow: clip;
   --course: 180svh;
+}
+
+.hh[data-effet="1"] .hh__scene {
+  z-index: 0;
 }
 
 @media (max-width: 900px) {
@@ -103,7 +109,7 @@ main > .sec:is(.papier, .ag-blanc)[data-jonction="feuille"] {
 
 .manifold-hero-film {
   position: fixed;
-  z-index: 1;
+  z-index: 5;
   overflow: hidden;
   background: #080a09;
   pointer-events: none;
@@ -125,7 +131,7 @@ main > .sec:is(.papier, .ag-blanc)[data-jonction="feuille"] {
 
 .manifold-hero-copy {
   position: absolute;
-  z-index: 1;
+  z-index: 6;
   inset: 0;
   display: grid;
   place-items: center;
@@ -141,6 +147,7 @@ main > .sec:is(.papier, .ag-blanc)[data-jonction="feuille"] {
   text-align: center;
   white-space: nowrap;
   opacity: 0;
+  pointer-events: none;
   will-change: opacity;
 }
 
@@ -899,5 +906,306 @@ main > .sec:is(.papier, .ag-blanc)[data-jonction="feuille"] {
 @media (prefers-reduced-motion: reduce) {
   .ecriture__fantome {
     --ecriture-fill: 100% !important;
+  }
+}
+/* X marquee ribbons (About → Services) */
+.x-marquee {
+  position: relative;
+  overflow: hidden;
+  height: 26vw;
+  min-height: 220px;
+  background: var(--noir, #121414);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.x-marquee__strip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 160%;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  color: #121414;
+  transform: translate(-50%, -50%) rotate(var(--x-rot, 0deg));
+}
+.x-marquee__strip--a {
+  --x-rot: 8deg;
+  z-index: 2;
+  background: #8b7cf8;
+}
+.x-marquee__strip--b {
+  --x-rot: -8deg;
+  z-index: 1;
+  background: #1fcf6e;
+}
+.x-marquee__track {
+  display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+  will-change: transform;
+  animation: x-marquee-left 30s linear infinite;
+}
+.x-marquee__strip--b .x-marquee__track {
+  animation-name: x-marquee-right;
+}
+.x-marquee:hover .x-marquee__track,
+.x-marquee:focus-within .x-marquee__track {
+  animation-play-state: paused;
+}
+.x-marquee__group {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0 0.4em;
+  font-family: inherit;
+  font-size: clamp(1rem, 1.4vw, 1.25rem);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.x-marquee__sep {
+  display: inline-block;
+  margin: 0 0.85em;
+}
+@keyframes x-marquee-left {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes x-marquee-right {
+  from { transform: translate3d(-50%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .x-marquee__track {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+#histoire .tl-bigyear .tl-star { display: none !important; }
+
+
+/* Text ticker separators (tl-star used in x-marquee) */
+.tl-star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0.85em;
+  font-style: normal;
+  line-height: 1;
+  vertical-align: middle;
+}
+.tl-star::before { content: "\2731"; }
+
+/* Keep X marquee layout when placed in homepage hero */
+.hh__fuseaux .x-marquee {
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
+}
+
+/* Keep the hero film tile in the headline's flex flow. */
+.hh .mj__l1 {
+  align-self: center;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+}
+
+.hh .mj__l1 > .mj__m {
+  position: relative;
+  z-index: 1;
+}
+
+.hh .mj__trou {
+  position: relative;
+  z-index: 0;
+  display: block;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  margin-inline: 0.3em;
+}
+
+.hh .mj__trou--tile {
+  display: contents;
+}
+
+.hh .mj__pile {
+  position: relative;
+  inset: auto;
+  z-index: 0;
+  display: block;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  margin-inline: 0.3em;
+  translate: 0 -0.06em;
+}
+
+.hh .hh__carte {
+  position: relative;
+  inset: auto;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hh__fuseaux {
+  left: 0;
+  right: 0;
+}
+
+.hero-ticker {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  padding-block-start: 12px;
+  color: #fff;
+  font: 600 var(--t-label)/1.2 var(--f-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero-ticker__track {
+  display: flex;
+  width: max-content;
+  animation: hero-ticker-scroll 30s linear infinite;
+}
+
+.hero-ticker__group {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.85em;
+  padding-inline-end: 0.85em;
+  white-space: nowrap;
+}
+
+.hero-ticker__separator {
+  display: inline-block;
+  flex: none;
+  width: 0.82em;
+  height: 0.82em;
+  background: var(--manifold-green, #1fcf6e);
+  -webkit-mask: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZD0iTTE1Ljk5ODUgNy41ODc3NkwxMS4wNTU0IDBMMTEuMjk2NyA5LjE5NDQzTDMuMDUzMDkgNi4xMTExOUw4LjM4OSAxMy4zOTk3TDAgMTUuOTk4NEw4LjM4OSAxOC42MDAzTDMuMDUzMDkgMjUuODg4OEwxMS4yOTY3IDIyLjgwNTZMMTEuMDU1NCAzMkwxNS45OTg1IDI0LjQxMjJMMjAuOTQxNSAzMkwyMC43MDAzIDIyLjgwNTZMMjguOTQzOCAyNS44ODg4TDIzLjYwNzkgMTguNjAwM0wzMiAxNS45OTg0TDIzLjYwNzkgMTMuMzk5N0wyOC45NDM4IDYuMTExMTlMMjAuNzAwMyA5LjE5NDQzTDIwLjk0MTUgMEwxNS45OTg1IDcuNTg3NzZaIi8+PC9zdmc+") center / contain no-repeat;
+  mask: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZD0iTTE1Ljk5ODUgNy41ODc3NkwxMS4wNTU0IDBMMTEuMjk2NyA5LjE5NDQzTDMuMDUzMDkgNi4xMTExOUw4LjM4OSAxMy4zOTk3TDAgMTUuOTk4NEw4LjM4OSAxOC42MDAzTDMuMDUzMDkgMjUuODg4OEwxMS4yOTY3IDIyLjgwNTZMMTEuMDU1NCAzMkwxNS45OTg1IDI0LjQxMjJMMjAuOTQxNSAzMkwyMC43MDAzIDIyLjgwNTZMMjguOTQzOCAyNS44ODg4TDIzLjYwNzkgMTguNjAwM0wzMiAxNS45OTg0TDIzLjYwNzkgMTMuMzk5N0wyOC45NDM4IDYuMTExMTlMMjAuNzAwMyA5LjE5NDQzTDIwLjk0MTUgMEwxNS45OTg1IDcuNTg3NzZaIi8+PC9zdmc+") center / contain no-repeat;
+}
+
+.hero-ticker:hover .hero-ticker__track {
+  animation-play-state: paused;
+}
+
+@keyframes hero-ticker-scroll {
+  to { transform: translateX(-10%); }
+}
+
+@media (max-width: 900px) {
+  .hh__plan:lang(en) {
+    --fs: calc((100cqw - 2 * var(--m)) / 8.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-ticker__track {
+    width: 100%;
+    animation: none;
+    transform: none;
+  }
+
+  .hero-ticker__group:first-child {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    white-space: normal;
+  }
+
+  .hero-ticker__group--duplicate {
+    display: none;
+  }
+}
+
+/* Text ticker separators (tl-star used in x-marquee) */
+.tl-star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0.85em;
+  font-style: normal;
+  line-height: 1;
+  vertical-align: middle;
+}
+.tl-star::before { content: "\2731"; }
+
+/* Keep X marquee layout when placed in homepage hero */
+.hh__fuseaux .x-marquee {
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
+}
+
+/* Initial load gate: the hero curtain covers the page until it is safe to reveal */
+html .hh__rideau {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  visibility: visible;
+  background: var(--papier);
+  animation: none;
+}
+
+html .hh__rideau-in {
+  position: absolute;
+  inset: 0;
+  background: var(--papier);
+  animation: none;
+}
+
+html.is-ready .hh__rideau {
+  animation: hh-rideau .62s cubic-bezier(.76, 0, .24, 1) both;
+}
+
+html.is-ready .hh__rideau-in {
+  animation: hh-rideau-in .62s cubic-bezier(.76, 0, .24, 1) both;
+}
+
+html:not(.is-ready) .manifold-hero-film,
+html:not(.is-ready) .pied-revele,
+html:not(.is-ready) .pied__logo {
+  visibility: hidden;
+}
+
+#expertises {
+  position: relative;
+  z-index: 3;
+  background: var(--noir);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.is-ready .hh__rideau {
+    display: none;
+  }
+
+  html.is-ready .hh .hh__manif {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    z-index: 5;
+    inset: 0;
+    margin: 0;
+    padding: 0 calc(var(--m) * 2);
+    text-align: center;
+    color: var(--txt);
+    font: 500 clamp(1.6rem, .7rem + 2.5cqw, 3.4rem)/1.1 var(--f-sans);
+    letter-spacing: -.02em;
   }
 }
