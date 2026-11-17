@@ -1,0 +1,10 @@
+{
+  "name": "manifold-redesign",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Manifold communications agency redesign",
+  "scripts": {
+    "dev": "npx --yes serve .",
+    "check": "node --check manifold-scroll-nav.js && node --check manifold-subpage.js"
+  }
+}
