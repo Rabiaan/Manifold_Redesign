@@ -1587,25 +1587,6 @@ html.service-ready .service-loader {
   letter-spacing: -.02em;
 }
 
-.service-closing {
-  padding-block: clamp(80px, 10vw, 160px);
-  text-align: center;
-}
-
-.service-closing .service-section__head {
-  justify-items: center;
-  margin-inline: auto;
-}
-
-.service-closing h2 {
-  max-width: 16ch;
-  margin-inline: auto;
-}
-
-.service-closing .btn {
-  margin-top: 34px;
-}
-
 .service-delivery-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
