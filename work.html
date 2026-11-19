@@ -62,26 +62,27 @@
     </a>
     <div class="nav__right">
       <nav class="nav__links" aria-label="Main navigation">
-        <div class="nav__item"><a href="service.html">Services</a></div>
         <div class="nav__item" data-sub="">
-          <a href="work.html" aria-current="page">Work</a>
-          <button class="nav__sub-btn" type="button" aria-expanded="false" aria-controls="sous-realisations" aria-label="Work submenu"><svg viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5"></path></svg></button>
-          <div class="sub" id="sous-realisations">
+          <a href="service.html">Services</a>
+          <button class="nav__sub-btn" type="button" aria-expanded="false" aria-controls="sous-services" aria-label="Services submenu"><svg viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5"></path></svg></button>
+          <div class="sub" id="sous-services">
             <div class="sub__aside">
-              <p class="sub__lead">Many industries, one <span class="nw">commitment<span class="etoile" aria-hidden="true"></span></span></p>
-              <a class="lnk sub__all" href="work.html">View all work<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6"></path></svg></a>
+              <p class="sub__lead">Specialist <span class="nw">Studios<span class="services-star" aria-hidden="true"></span></span></p>
+              <a class="lnk sub__all" href="service.html">View all services<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6"></path></svg></a>
             </div>
-            <div class="sub__main rea-par-sect">
-              <p class="sub__k label" id="sous-realisations-s">By industry</p>
-              <ul class="sub__list sub__list--court" aria-labelledby="sous-realisations-s">
+            <div class="sub__main">
+              <p class="sub__k label" id="sous-services-s">What we do</p>
+              <ul class="sub__list" aria-labelledby="sous-services-s">
 
-                <li><a href="work.html"><span class="sub__txt"><span class="sub__t">Government &amp; public sector</span></span><svg class="sub__go" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6"></path></svg></a></li>
+                <li><a href="film.html"><span class="sub__txt"><span class="sub__t">Film</span><span class="sub__s">Commercials, music videos &amp; narrative</span></span><svg class="sub__go" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6"></path></svg></a></li>
 
-                <li><a href="work.html"><span class="sub__txt"><span class="sub__t">Retail &amp; manufacturing</span></span><svg class="sub__go" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6"></path></svg></a></li>
+                <li><a href="creative.html"><span class="sub__txt"><span class="sub__t">Creative</span><span class="sub__s">Brand identities, campaigns &amp; art direction</span></span><svg class="sub__go" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6"></path></svg></a></li>
 
-                <li><a href="work.html"><span class="sub__txt"><span class="sub__t">Health &amp; social services</span></span><svg class="sub__go" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6"></path></svg></a></li>
+                <li><a href="ai.html"><span class="sub__txt"><span class="sub__t">AI</span><span class="sub__s">AI commercials, visual content &amp; hybrid</span></span><svg class="sub__go" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6"></path></svg></a></li>
 
-                <li><a href="work.html"><span class="sub__txt"><span class="sub__t">Culture &amp; tourism</span></span><svg class="sub__go" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6"></path></svg></a></li>
+                <li><a href="craft.html"><span class="sub__txt"><span class="sub__t">Craft</span><span class="sub__s">Editing, colour, motion &amp; finishing</span></span><svg class="sub__go" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6"></path></svg></a></li>
+
+                <li><a href="content.html"><span class="sub__txt"><span class="sub__t">Content</span><span class="sub__s">Commercial photography &amp; social content</span></span><svg class="sub__go" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6"></path></svg></a></li>
 
               </ul>
             </div>
@@ -104,26 +105,21 @@
     <li>
       <div class="menu__row">
         <a href="service.html">Services</a>
-        
+        <button class="menu__plus" type="button" aria-expanded="false" aria-controls="menu-services" aria-label="Services submenu" data-menu-sub=""></button>
       </div>
-      
-    </li>
-    <li>
-      <div class="menu__row">
-        <a href="work.html" aria-current="page">Work</a>
-        <button class="menu__plus" type="button" aria-expanded="false" aria-controls="menu-realisations" aria-label="Work submenu" data-menu-sub=""></button>
-      </div>
-      <div class="menu__sub" id="menu-realisations" hidden="">
-        <p class="menu__k label rea-par-sect" id="menu-realisations-s">By industry</p>
-        <ul class="rea-par-sect" aria-labelledby="menu-realisations-s">
+      <div class="menu__sub" id="menu-services" hidden="">
+        <p class="menu__k label" id="menu-services-s">What we do</p>
+        <ul aria-labelledby="menu-services-s">
 
-          <li><a href="work.html">Government &amp; public sector</a></li>
+          <li><a href="film.html"><span class="menu__sub-copy"><span class="menu__sub-title">Film</span><span class="menu__sub-desc">Commercials, music videos &amp; narrative</span></span></a></li>
 
-          <li><a href="work.html">Retail &amp; manufacturing</a></li>
+          <li><a href="creative.html"><span class="menu__sub-copy"><span class="menu__sub-title">Creative</span><span class="menu__sub-desc">Brand identities, campaigns &amp; art direction</span></span></a></li>
 
-          <li><a href="work.html">Health &amp; social services</a></li>
+          <li><a href="ai.html"><span class="menu__sub-copy"><span class="menu__sub-title">AI</span><span class="menu__sub-desc">AI commercials, visual content &amp; hybrid</span></span></a></li>
 
-          <li><a href="work.html">Culture &amp; tourism</a></li>
+          <li><a href="craft.html"><span class="menu__sub-copy"><span class="menu__sub-title">Craft</span><span class="menu__sub-desc">Editing, colour, motion &amp; finishing</span></span></a></li>
+
+          <li><a href="content.html"><span class="menu__sub-copy"><span class="menu__sub-title">Content</span><span class="menu__sub-desc">Commercial photography &amp; social content</span></span></a></li>
 
         </ul>
       </div>
@@ -140,7 +136,7 @@
   <div class="menu__foot">
     <div class="menu__appel">
       <p class="menu__contact"><span class="menu__tel-k label">Instagram</span><a href="https://www.instagram.com/manifoldmotionpictures/">@manifoldmotionpictures</a></p>
-      <a class="btn btn--papaye btn--sm menu__cta" href="contact.html" data-cta="contactez-nous">Contact us<span class="btn__arrow" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none"><path d="M1 8h13M9 3l5 5-5 5" stroke="currentColor" stroke-width="1.6"></path></svg></span></a>
+      <a class="btn btn--papaye btn--sm menu__cta" href="contact.html" data-cta="contactez-nous">Start a project &rarr;</a>
     </div>
     
     <div class="clocks" role="group" aria-label="Local time at our locations">
@@ -856,10 +852,10 @@
     <nav class="pied__cols" aria-label="Footer">
       <div class="pied__col">
         <p class="label">Services</p>
-        <a href="service.html"><span class="forme forme--sceau forme--lavande" aria-hidden="true"></span>Film Production</a>
-        <a href="service.html"><span class="forme forme--fleur forme--papaye" aria-hidden="true"></span>Creative Agency</a>
-        <a href="service.html"><span class="forme forme--etoile-huit forme--citron" aria-hidden="true"></span>AI Production Studio</a>
-        <a href="service.html"><span class="forme forme--trefle forme--vert" aria-hidden="true"></span>Post-Production &amp; Motion</a>
+        <a href="film.html"><span class="forme forme--sceau forme--lavande" aria-hidden="true"></span>Film Production</a>
+        <a href="creative.html"><span class="forme forme--fleur forme--papaye" aria-hidden="true"></span>Creative Agency</a>
+        <a href="ai.html"><span class="forme forme--etoile-huit forme--citron" aria-hidden="true"></span>AI Production Studio</a>
+        <a href="craft.html"><span class="forme forme--trefle forme--vert" aria-hidden="true"></span>Post-Production &amp; Motion</a>
       </div>
       <div class="pied__col">
         <p class="label">About</p>

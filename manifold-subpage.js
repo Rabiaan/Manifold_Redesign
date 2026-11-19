@@ -842,3 +842,84 @@
   steps.forEach((s, i) => { if (i !== 0) { s.hidden = true; s.setAttribute('aria-hidden', 'true'); } });
   showStep(0, false);
 })();
+
+(() => {
+  const timeline = document.querySelector('[data-craft-timeline]');
+  if (!timeline) return;
+
+  const scrub = timeline.querySelector('[data-craft-scrub]');
+  const timeOutput = timeline.querySelector('[data-craft-time]');
+  const lanes = [...timeline.querySelectorAll('[data-craft-lane]')];
+  const frameRate = 24;
+  const totalSeconds = 180;
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+  const formatTimecode = (seconds) => {
+    const totalFrames = Math.round(seconds * frameRate);
+    const hours = Math.floor(totalFrames / (frameRate * 3600));
+    const minutes = Math.floor((totalFrames % (frameRate * 3600)) / (frameRate * 60));
+    const secs = Math.floor((totalFrames % (frameRate * 60)) / frameRate);
+    const frames = totalFrames % frameRate;
+    return [hours, minutes, secs, frames].map((part) => String(part).padStart(2, '0')).join(':');
+  };
+
+  const setPlayhead = (percent, activeLane) => {
+    const value = clamp(percent, 0, 100);
+    const timecode = formatTimecode((value / 100) * totalSeconds);
+    timeline.style.setProperty('--playhead', value + '%');
+    if (scrub) {
+      scrub.setAttribute('aria-valuenow', String(Math.round(value)));
+      scrub.setAttribute('aria-valuetext', timecode);
+    }
+    if (timeOutput) timeOutput.textContent = timecode;
+
+    let laneToActivate = activeLane;
+    if (!laneToActivate && lanes.length) {
+      laneToActivate = lanes.reduce((closest, lane) => {
+        const distance = Math.abs(Number(lane.dataset.start || 0) - value);
+        return !closest || distance < closest.distance ? { lane, distance } : closest;
+      }, null).lane;
+    }
+
+    lanes.forEach((lane) => {
+      const active = lane === laneToActivate;
+      lane.classList.toggle('is-active', active);
+      lane.setAttribute('aria-pressed', String(active));
+    });
+  };
+
+  lanes.forEach((lane, index) => {
+    lane.addEventListener('click', () => setPlayhead(Number(lane.dataset.start || 0), lane));
+    lane.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        const direction = event.key === 'ArrowDown' ? 1 : -1;
+        lanes[(index + direction + lanes.length) % lanes.length].focus();
+      }
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        const direction = event.key === 'ArrowRight' ? 1 : -1;
+        setPlayhead(Number(lane.dataset.start || 0) + direction, lane);
+      }
+    });
+  });
+
+  if (scrub) {
+    scrub.addEventListener('click', (event) => {
+      const rect = scrub.getBoundingClientRect();
+      if (!rect.width) return;
+      setPlayhead(((event.clientX - rect.left) / rect.width) * 100);
+    });
+    scrub.addEventListener('keydown', (event) => {
+      const current = Number(scrub.getAttribute('aria-valuenow') || 0);
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        setPlayhead(current + (event.key === 'ArrowRight' ? 1 : -1));
+      }
+      if (event.key === 'Home' || event.key === 'End') {
+        event.preventDefault();
+        setPlayhead(event.key === 'Home' ? 0 : 100);
+      }
+    });
+  }
+})();
